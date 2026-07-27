@@ -3,15 +3,15 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (using install instead of ci because package-lock.json is missing)
+RUN npm install
 
 # Copy source code
 COPY . .
 
-# Build frontend
+# Build frontend and server
 RUN npm run build
 
 # Production stage
@@ -22,17 +22,17 @@ WORKDIR /app
 # Install dumb-init to handle signals properly
 RUN apk add --no-cache dumb-init
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Set production environment
+ENV NODE_ENV=production
+
+# Copy package.json for npm start command
+COPY package.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm install --only=production
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
-COPY server.ts ./
-COPY src/api ./src/api
-COPY tsconfig.json ./
 
 # Create a non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001

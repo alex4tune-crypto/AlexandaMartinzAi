@@ -2,16 +2,18 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, initializeFirestore, Firestore } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 
-const envApiKey = (import.meta as any).env?.VITE_FIREBASE_API_KEY;
-const envProjectId = (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID;
+const envApiKey = (import.meta as any).env?.VITE_FIREBASE_API_KEY || (import.meta as any).env?.REACT_APP_FIREBASE_API_KEY;
+const envProjectId = (import.meta as any).env?.VITE_FIREBASE_PROJECT_ID || (import.meta as any).env?.REACT_APP_FIREBASE_PROJECT_ID;
+const envAuthDomain = (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN || (import.meta as any).env?.REACT_APP_FIREBASE_AUTH_DOMAIN;
+const envStorageBucket = (import.meta as any).env?.VITE_FIREBASE_STORAGE_BUCKET || (import.meta as any).env?.REACT_APP_FIREBASE_STORAGE_BUCKET;
 
 const isRealConfig = Boolean(envApiKey && envProjectId && !envApiKey.includes('DemoKey'));
 
 const firebaseConfig = {
   apiKey: envApiKey || "AIzaSyDemoKeyForMarketplaceFirestore",
-  authDomain: `${envProjectId || "aistudio-marketplace"}.firebaseapp.com`,
+  authDomain: envAuthDomain || `${envProjectId || "aistudio-marketplace"}.firebaseapp.com`,
   projectId: envProjectId || "aistudio-marketplace",
-  storageBucket: `${envProjectId || "aistudio-marketplace"}.appspot.com`,
+  storageBucket: envStorageBucket || `${envProjectId || "aistudio-marketplace"}.firebasestorage.app`,
 };
 
 export const isFirebaseConfigured = isRealConfig;
