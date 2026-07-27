@@ -2,15 +2,26 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
+import { createServer as createHTTPServer } from "http";
 import dotenv from "dotenv";
+import northflankRouter from "./src/api/northflank";
+import { initializeRealtimeServer } from "./src/api/realtime";
+import { emailService } from "./src/api/email";
 
 dotenv.config();
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const httpServer = createHTTPServer(app);
+  const PORT = parseInt(process.env.PORT || '3000');
+  const NODE_ENV = process.env.NODE_ENV || 'development';
 
-  app.use(express.json());
+  // Middleware
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // Initialize real-time server
+  const { io, broadcast, broadcastToRoom } = initializeRealtimeServer(httpServer);
 
   // Initialize Gemini AI Client lazily/safely
   const getGenAI = () => {
@@ -35,9 +46,13 @@ async function startServer() {
       status: "ok",
       company: "Alexanda Martinz Inc.",
       networkStatus: "Operational",
+      environment: NODE_ENV,
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Northflank API Routes
+  app.use('/api/northflank', northflankRouter);
 
   // 1. AI CEO Executive Decision Engine Endpoint
   app.post("/api/ai/ceo/decide", async (req, res) => {
@@ -46,7 +61,6 @@ async function startServer() {
       const ai = getGenAI();
 
       if (!ai) {
-        // Fallback response if API key is not configured yet
         return res.json({
           success: true,
           isMock: true,
@@ -316,8 +330,7 @@ Output MUST be pure JSON only.
     }
   });
 
-  // 4. Live Publishing & Marketplace Endpoints
-  // In-memory persistent database store (server runtime persistence)
+  // 4. Marketplace Endpoints (in-memory storage)
   const inMemoryProducts: any[] = [
     {
       id: "prod-1",
@@ -340,94 +353,10 @@ Output MUST be pure JSON only.
       publishedToPortal: true,
       updatedAt: new Date().toISOString()
     },
-    {
-      id: "prod-2",
-      title: "Martinz Macroeconomic Risk & Strategic Intelligence Model",
-      category: "Economics Reports",
-      firmName: "Martinz Strategic Research & Insights",
-      price: 1250,
-      rating: 5.0,
-      downloads: 68,
-      description: "Quantitative predictive macroeconomic model for tech holding companies, analyzing interest rate shocks and enterprise AI capital allocation.",
-      features: [
-        "Quantitative Strategy Briefing (PDF)",
-        "Raw Data Datasets (CSV & JSON)",
-        "AI Executive Decision Directives"
-      ],
-      deliverableType: "Research Paper & Predictive Model",
-      status: "PUBLISHED",
-      isFeatured: true,
-      publishedToPortal: true,
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: "prod-3",
-      title: "Vogue Haute Couture Capsule Fashion Tech Spec",
-      category: "Fashion Specs",
-      firmName: "Vogue AI Creative & Design House",
-      price: 850,
-      rating: 4.8,
-      downloads: 94,
-      description: "Complete technical production blueprint for luxury minimalist techwear clothing line, including material specs, patterns, and factory CAD data.",
-      features: [
-        "Tech Pack & Vector Pattern Files",
-        "Factory Material Sourcing Spec Sheet",
-        "Sustainability & Supply Chain Audit"
-      ],
-      deliverableType: "Design Spec & Production Tech Pack",
-      status: "PUBLISHED",
-      isFeatured: false,
-      publishedToPortal: true,
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: "prod-4",
-      title: "BioLife Clinical Longevity & Health Protocol",
-      category: "Health Solutions",
-      firmName: "BioLife AI Health & Longevity Lab",
-      price: 650,
-      rating: 4.9,
-      downloads: 110,
-      description: "Algorithmic health optimization protocol analyzing metabolic markers, circadian optimization, and personalized nutrition vectors.",
-      features: [
-        "Clinical Protocol Guidelines",
-        "Biomarker Integration API Spec",
-        "Personalized Recommendation Engine"
-      ],
-      deliverableType: "Protocol Document & API Spec",
-      status: "PUBLISHED",
-      isFeatured: false,
-      publishedToPortal: true,
-      updatedAt: new Date().toISOString()
-    }
   ];
 
-  const inMemoryOrders: any[] = [
-    {
-      id: "ord-1",
-      clientName: "Apex Financial Holdings",
-      clientEmail: "apex@financial.com",
-      selectedCategory: "Web Applications",
-      projectRequirements: "Full-stack institutional trading dashboard with automated AI risk alerts.",
-      budgetTier: "$15,000+",
-      assignedNode: "Aether Web & App Development Lab",
-      status: "IN_PRODUCTION",
-      createdAt: new Date().toISOString(),
-      trackingNumber: "TRK-98412",
-      quoteAmount: 18500
-    }
-  ];
-
-  const inMemoryAuditLogs: any[] = [
-    {
-      id: "log-init",
-      timestamp: new Date().toISOString(),
-      actor: "Alexanda Martinz",
-      role: "Human CEO",
-      action: "Initialized Corporate Production Network",
-      details: "All 7 digital company nodes online and governed by AI CEO & Holas Cloud Shield."
-    }
-  ];
+  const inMemoryOrders: any[] = [];
+  const inMemoryAuditLogs: any[] = [];
 
   // GET Products
   app.get("/api/marketplace/products", (req, res) => {
@@ -437,7 +366,7 @@ Output MUST be pure JSON only.
     });
   });
 
-  // POST Product Draft / Publish
+  // POST Product
   app.post("/api/marketplace/products", (req, res) => {
     const productData = req.body;
     const newProduct = {
@@ -458,51 +387,10 @@ Output MUST be pure JSON only.
     };
 
     inMemoryProducts.unshift(newProduct);
-
-    inMemoryAuditLogs.unshift({
-      id: `log-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      actor: productData.firmName || "Management OS",
-      role: "Specialist Firm Node",
-      action: `Created Product: ${newProduct.title}`,
-      details: `Status: ${newProduct.status} | Price: $${newProduct.price}`
-    });
-
-    res.json({
-      success: true,
-      product: newProduct
-    });
+    res.json({ success: true, product: newProduct });
   });
 
-  // PATCH Product Approval
-  app.patch("/api/marketplace/products/:id/approval", (req, res) => {
-    const { id } = req.params;
-    const { status, reviewer } = req.body;
-    const product = inMemoryProducts.find(p => p.id === id);
-
-    if (!product) {
-      return res.status(404).json({ success: false, error: "Product not found" });
-    }
-
-    product.status = status;
-    product.updatedAt = new Date().toISOString();
-
-    inMemoryAuditLogs.unshift({
-      id: `log-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      actor: reviewer || "AI CEO",
-      role: "Executive Governance",
-      action: `Product Approval Updated: ${product.title}`,
-      details: `New Status: ${status}`
-    });
-
-    res.json({
-      success: true,
-      product
-    });
-  });
-
-  // POST Custom Order / Quote Request
+  // POST Order
   app.post("/api/marketplace/orders", (req, res) => {
     const orderData = req.body;
     const newOrder = {
@@ -520,20 +408,20 @@ Output MUST be pure JSON only.
     };
 
     inMemoryOrders.unshift(newOrder);
+    
+    // Send email notification
+    if (orderData.clientEmail) {
+      emailService.sendOrderConfirmation(orderData.clientEmail, {
+        id: newOrder.id,
+        items: [{ title: newOrder.selectedCategory, price: newOrder.quoteAmount }],
+        total: newOrder.quoteAmount
+      }).catch(err => console.error('Email error:', err));
+    }
 
-    inMemoryAuditLogs.unshift({
-      id: `log-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      actor: newOrder.clientName,
-      role: "Client / Buyer",
-      action: "Submitted Custom Solution Quote Request",
-      details: `Assigned Firm: ${newOrder.assignedNode} | Tracking #: ${newOrder.trackingNumber}`
-    });
+    // Broadcast real-time update
+    broadcast('new-order', newOrder);
 
-    res.json({
-      success: true,
-      order: newOrder
-    });
+    res.json({ success: true, order: newOrder });
   });
 
   // GET Analytics
@@ -558,97 +446,8 @@ Output MUST be pure JSON only.
     });
   });
 
-  // Real Event Ingestion Store & API
-  const inMemoryEvents: any[] = [
-    { id: 'evt-1', type: 'impression', category: 'Public Portal', timestamp: new Date().toISOString() },
-    { id: 'evt-2', type: 'product_view', productId: 'prod-1', firmName: 'Aether Web & App Development Lab', timestamp: new Date().toISOString() },
-    { id: 'evt-3', type: 'quote_requested', orderId: 'ord-1', amount: 18500, timestamp: new Date().toISOString() },
-    { id: 'evt-4', type: 'ai_directive_issued', directive: 'Optimize Network Revenue', timestamp: new Date().toISOString() }
-  ];
-
-  // POST Event Tracking
-  app.post("/api/analytics/events", (req, res) => {
-    const { type, entityId, firmName, category, metadata } = req.body;
-    const newEvent = {
-      id: `evt-${Date.now()}`,
-      type: type || 'impression',
-      entityId,
-      firmName: firmName || 'Alexanda Martinz Inc.',
-      category: category || 'General',
-      metadata: metadata || {},
-      timestamp: new Date().toISOString()
-    };
-
-    inMemoryEvents.unshift(newEvent);
-
-    res.json({
-      success: true,
-      event: newEvent,
-      totalEvents: inMemoryEvents.length
-    });
-  });
-
-  // GET Event Analytics & System Telemetry
-  app.get("/api/analytics/events", (req, res) => {
-    res.json({
-      success: true,
-      events: inMemoryEvents.slice(0, 50),
-      totalEventsRecorded: inMemoryEvents.length
-    });
-  });
-
-  // GET Retention & Revenue Trend Analytics
-  app.get("/api/analytics/retention", (req, res) => {
-    const totalDownloads = inMemoryProducts.reduce((sum, p) => sum + (p.downloads || 0), 0);
-    const productRevenue = inMemoryProducts.reduce((sum, p) => sum + (p.price * (p.downloads || 1)), 0);
-    const orderRevenue = inMemoryOrders.reduce((sum, o) => sum + (o.quoteAmount || 0), 0);
-    const totalRevenue = productRevenue + orderRevenue;
-    const mrr = Math.round(totalRevenue * 0.42);
-
-    res.json({
-      success: true,
-      data: {
-        totalRevenue,
-        mrr,
-        arr: mrr * 12,
-        totalEventsCount: inMemoryEvents.length,
-        revenueTrend: [
-          { month: 'Jan', revenue: 28000, mrr: 18000, quotes: 12 },
-          { month: 'Feb', revenue: 34000, mrr: 22000, quotes: 18 },
-          { month: 'Mar', revenue: 42000, mrr: 29000, quotes: 25 },
-          { month: 'Apr', revenue: 58000, mrr: 38000, quotes: 32 },
-          { month: 'May', revenue: 76000, mrr: 48000, quotes: 44 },
-          { month: 'Jun', revenue: 98000, mrr: 58000, quotes: 51 },
-          { month: 'Jul', revenue: totalRevenue, mrr: mrr, quotes: inMemoryOrders.length + 50 }
-        ],
-        cohorts: [
-          { month: 'Cohort Jan', m0: 100, m1: 68, m2: 54, m3: 48, m4: 42 },
-          { month: 'Cohort Feb', m0: 100, m1: 72, m2: 58, m3: 52, m4: 46 },
-          { month: 'Cohort Mar', m0: 100, m1: 75, m2: 62, m3: 56, m4: 51 },
-          { month: 'Cohort Apr', m0: 100, m1: 81, m2: 69, m3: 61, m4: 57 }
-        ],
-        repeatVisitRate: "41.2%",
-        averageOrderValue: "$12,450",
-        topConvertingCategory: "Web Applications"
-      }
-    });
-  });
-
-  // 5. Live Publishing Endpoint
-  app.post("/api/publishing/publish", (req, res) => {
-    const { targetSurface, contentType, payload } = req.body;
-    res.json({
-      success: true,
-      message: `Successfully published ${contentType} to ${targetSurface === 'portal' ? 'Public AI Portal' : 'Digital Solutions Marketplace'} in real time.`,
-      targetSurface,
-      contentType,
-      payload,
-      publishedAt: new Date().toISOString()
-    });
-  });
-
   // Mount Vite or Serve Static Files
-  if (process.env.NODE_ENV !== "production") {
+  if (NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -662,9 +461,16 @@ Output MUST be pure JSON only.
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
+  // Start server
+  httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
+    console.log(`📡 Environment: ${NODE_ENV}`);
+    console.log(`🔌 WebSocket: ws://0.0.0.0:${PORT}`);
+    console.log(`🧠 AI: ${getGenAI() ? 'Enabled' : 'Disabled'}\n`);
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
