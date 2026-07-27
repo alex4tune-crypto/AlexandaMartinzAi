@@ -1,0 +1,146 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile with role and organization details",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 150 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "companyName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["customer", "admin"], "maxLength": 20 },
+        "plan": { "type": "string", "enum": ["Free Tier", "Pro Foundry", "Enterprise Network"], "maxLength": 50 },
+        "accountBalance": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "lastLogin": { "type": "string" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Real-time enterprise invoice record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "invoiceNumber": { "type": "string", "maxLength": 50 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "maxLength": 150 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid", "overdue", "cancelled"], "maxLength": 20 },
+        "description": { "type": "string", "maxLength": 500 },
+        "deliverableName": { "type": "string", "maxLength": 150 },
+        "dueDate": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "paidAt": { "type": "string" }
+      },
+      "required": ["id", "invoiceNumber", "userId", "amount", "status", "createdAt"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "Customer recurring production or advisory subscription plan",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "maxLength": 150 },
+        "planName": { "type": "string", "maxLength": 100 },
+        "price": { "type": "number" },
+        "interval": { "type": "string", "enum": ["monthly", "yearly"], "maxLength": 20 },
+        "status": { "type": "string", "enum": ["active", "past_due", "cancelled"], "maxLength": 20 },
+        "currentPeriodEnd": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "planName", "price", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Purchased product or custom solutions order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userEmail": { "type": "string", "maxLength": 150 },
+        "productTitle": { "type": "string", "maxLength": 150 },
+        "firmName": { "type": "string", "maxLength": 100 },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["COMPLETED", "IN_PRODUCTION", "PENDING"], "maxLength": 20 },
+        "deliverableType": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "productTitle", "amount", "status"]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Represents Alexanda Martinz Inc. or a subsidiary digital firm node",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "nodeType": { "type": "string", "maxLength": 50 },
+        "domain": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "maxLength": 20 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "nodeType", "status"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Digital output or service available in the marketplace",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 150 },
+        "category": { "type": "string", "maxLength": 50 },
+        "price": { "type": "number" },
+        "description": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "maxLength": 20 }
+      },
+      "required": ["id", "title", "category", "price", "status"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Auditable log of executive, AI CEO, or Holas security actions",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "actor": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "maxLength": 50 },
+        "action": { "type": "string", "maxLength": 200 },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "actor", "role", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles with role and plan info"
+    },
+    "/invoices/{invoiceId}": {
+      "schema": "Invoice",
+      "description": "Customer invoices for billing"
+    },
+    "/subscriptions/{subscriptionId}": {
+      "schema": "Subscription",
+      "description": "User recurring subscription plans"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer product orders and purchase history"
+    },
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Collection of corporate nodes"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Digital products catalog"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Corporate audit trail"
+    }
+  }
+}
