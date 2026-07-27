@@ -1,12 +1,13 @@
 services:
   - type: web
     name: alexanda-martinz-ai
-    runtime: docker
+    runtime: node
     plan: starter
     region: oregon
     env:
       NODE_ENV: production
-    dockerfile: ./Dockerfile
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: PORT

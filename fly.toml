@@ -2,8 +2,8 @@
 app = "alexanda-martinz-ai"
 primary_region = "iad"
 
-[build]
-  dockerfile = "Dockerfile"
+# [build]
+#   dockerfile = "Dockerfile"
 
 [env]
   NODE_ENV = "production"
