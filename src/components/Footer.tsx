@@ -1,27 +1,47 @@
 import React from 'react';
-import { ShieldCheck, Lock } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="h-8 bg-white border-t border-slate-200 flex items-center justify-between px-6 shrink-0 text-[10px] text-slate-500 font-medium">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span>Cloud Engine: Operational</span>
+    <footer className="bg-slate-900 border-t border-slate-700 text-slate-400 text-sm py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-4 gap-8 mb-8">
+          <div>
+            <h3 className="font-bold text-slate-200 mb-3">Company</h3>
+            <ul className="space-y-2">
+              <li><a href="#" className="hover:text-slate-200">About</a></li>
+              <li><a href="#" className="hover:text-slate-200">Blog</a></li>
+              <li><a href="#" className="hover:text-slate-200">Careers</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-200 mb-3">Product</h3>
+            <ul className="space-y-2">
+              <li><a href="#" className="hover:text-slate-200">Features</a></li>
+              <li><a href="#" className="hover:text-slate-200">Pricing</a></li>
+              <li><a href="#" className="hover:text-slate-200">Security</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-200 mb-3">Legal</h3>
+            <ul className="space-y-2">
+              <li><a href="#" className="hover:text-slate-200">Privacy</a></li>
+              <li><a href="#" className="hover:text-slate-200">Terms</a></li>
+              <li><a href="#" className="hover:text-slate-200">Cookies</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-200 mb-3">Follow</h3>
+            <ul className="space-y-2">
+              <li><a href="#" className="hover:text-slate-200">Twitter</a></li>
+              <li><a href="#" className="hover:text-slate-200">LinkedIn</a></li>
+              <li><a href="#" className="hover:text-slate-200">GitHub</a></li>
+            </ul>
+          </div>
         </div>
-        <div className="flex items-center gap-1 text-slate-400">
-          <ShieldCheck className="w-3.5 h-3.5 text-cyan-600" />
-          <span>Holas Encryption: v9.42</span>
+        <div className="border-t border-slate-700 pt-8 text-center">
+          <p>&copy; 2026 Alexanda Martinz Inc. All rights reserved.</p>
         </div>
-        <div className="hidden sm:flex items-center gap-1 text-slate-400">
-          <Lock className="w-3 h-3 text-slate-400" />
-          <span>Zero-Trust Infrastructure Active</span>
-        </div>
-      </div>
-      <div>
-        Alexanda Martinz Inc. &copy; {new Date().getFullYear()} AI Production Network | All Nodes Synchronized
       </div>
     </footer>
   );
 };
-
