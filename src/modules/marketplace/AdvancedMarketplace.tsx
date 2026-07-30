@@ -124,52 +124,56 @@ export const AdvancedMarketplace: React.FC = () => {
             </div>
 
             {/* Products Grid */}
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'}`}>
+            <div className={`grid gap-8 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'}`}>
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className={`bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-emerald-500 hover:shadow-xl transition-all group ${
+                  className={`bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-emerald-500 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 group ${
                     viewMode === 'list' ? 'flex' : ''
                   }`}
                 >
-                  <div className={`bg-slate-100 flex items-center justify-center relative ${viewMode === 'list' ? 'w-48 h-full' : 'h-48'}`}>
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-blue-600/20 opacity-50" />
-                    <ShoppingCart size={48} className="text-emerald-600 opacity-20" />
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[10px] font-bold text-emerald-700 shadow-sm border border-emerald-100">
+                  <div className={`bg-slate-50 flex items-center justify-center relative overflow-hidden ${viewMode === 'list' ? 'w-64 h-full' : 'h-52'}`}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-blue-600/5 group-hover:scale-110 transition-transform duration-500" />
+                    <ShoppingCart size={48} className="text-emerald-600 opacity-10 group-hover:scale-110 transition-transform duration-500" />
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-black text-emerald-700 shadow-sm border border-emerald-100 uppercase tracking-wider">
                       {product.status}
                     </div>
                   </div>
 
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="mb-2">
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">{product.category}</p>
-                      <h4 className="font-bold text-slate-900 text-base line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">{product.category}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{product.firmName.split(' ')[0]}</span>
+                      </div>
+                      <h4 className="font-bold text-slate-900 text-lg leading-tight group-hover:text-emerald-600 transition-colors">
                         {product.title}
                       </h4>
                     </div>
 
-                    <p className="text-slate-500 text-xs mb-4 line-clamp-2 flex-1">{product.description}</p>
+                    <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-2 flex-1">{product.description}</p>
 
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-6 pt-4 border-t border-slate-100">
                       <div className="flex flex-col">
-                        <span className="text-slate-400 text-[10px] font-bold uppercase">Price</span>
-                        <span className="text-lg font-black text-slate-900">${product.price}</span>
+                        <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-0.5">Price</span>
+                        <span className="text-xl font-black text-slate-900">${product.price}</span>
                       </div>
                       <div className="flex flex-col items-end">
-                        <div className="flex items-center gap-1">
-                          <Star size={14} className="text-amber-400 fill-amber-400" />
-                          <span className="text-xs font-bold text-slate-700">{product.rating}</span>
+                        <div className="flex items-center gap-1.5 bg-amber-50 px-2 py-1 rounded-lg">
+                          <Star size={14} className="text-amber-500 fill-amber-500" />
+                          <span className="text-xs font-black text-amber-700">{product.rating}</span>
                         </div>
-                        <span className="text-[10px] text-slate-400">{product.downloads} downloads</span>
+                        <span className="text-[10px] text-slate-400 font-medium mt-1.5">{product.downloads} units deployed</span>
                       </div>
                     </div>
 
                     <button
                       onClick={() => addToCart(product)}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+                      className="w-full bg-slate-900 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-slate-900/10 hover:shadow-emerald-600/20 flex items-center justify-center gap-2"
                     >
                       <ShoppingCart size={18} />
-                      Add to Cart
+                      Purchase License
                     </button>
                   </div>
                 </div>
