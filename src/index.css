@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+@theme {
+  --color-obsidian: #020617;
+  --color-emerald-glow: #10b981;
+  --color-cyan-glow: #06b6d4;
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  
+  .glass-header {
+    @apply bg-[#020617]/80 backdrop-blur-md border-b border-white/5;
+  }
+  
+  .emerald-glow {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+  }
+  
+  .cyan-glow {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+  }
+
+  .text-shadow-glow {
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+}
+
+body {
+  @apply bg-[#020617] text-slate-100 antialiased;
+}
+
+/* Custom scrollbar for high-end look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+}
