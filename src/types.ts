@@ -92,7 +92,7 @@ export interface DigitalProduct {
   features: string[];
   previewContent?: string;
   deliverableType: string;
-  status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED';
+  status: 'PUBLISHED' | 'DRAFT' | 'ARCHIVED' | 'PENDING_REVIEW' | 'REJECTED';
   isFeatured: boolean;
   publishedToPortal: boolean;
   updatedAt: string;

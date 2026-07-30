@@ -66,6 +66,16 @@ export const realtimeService = {
     });
   },
 
+  // Subscribe to AI decisions
+  subscribeToDecisions(callback: (decisions: any[]) => void) {
+    const { database: db } = initFirebase();
+    const decisionsRef = ref(db, 'ai_decisions');
+    return onValue(decisionsRef, (snapshot: DataSnapshot) => {
+      const data = snapshot.val() || {};
+      callback(Object.values(data).reverse());
+    });
+  },
+
   // Update product
   async updateProduct(productId: string, data: any) {
     const { database: db } = initFirebase();
@@ -88,4 +98,7 @@ export const realtimeService = {
   unsubscribe(unsubscriber: any) {
     if (unsubscriber) unsubscriber();
   },
+
+  // Export initFirebase if needed elsewhere
+  initFirebase,
 };

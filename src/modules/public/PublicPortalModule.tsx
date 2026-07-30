@@ -24,28 +24,28 @@ export const PublicPortalModule: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 bg-slate-950 overflow-y-auto">
+    <div className="flex-1 bg-slate-50 overflow-y-auto">
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-b border-slate-700 py-16">
+      <div className="bg-white border-b border-slate-200 py-16">
         <div className="max-w-7xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4 flex items-center justify-center gap-2">
-            <Sparkles className="text-blue-400" /> Alexanda Martinz AI Factory
+          <h2 className="text-4xl font-black text-slate-900 mb-4 flex items-center justify-center gap-2">
+            <Sparkles className="text-emerald-500" /> Alexanda Martinz AI Factory
           </h2>
-          <p className="text-xl text-slate-400 mb-8">
+          <p className="text-xl text-slate-500 mb-8 font-medium">
             Premium AI-Generated Digital Products & Custom Solutions
           </p>
-          <div className="grid grid-cols-3 gap-8 mb-8">
-            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <div className="text-3xl font-bold text-blue-400 mb-2">12+</div>
-              <div className="text-slate-400">Featured Products</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 shadow-sm">
+              <div className="text-3xl font-black text-emerald-600 mb-2">12+</div>
+              <div className="text-slate-500 font-bold text-sm uppercase tracking-wider">Featured Products</div>
             </div>
-            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <div className="text-3xl font-bold text-green-400 mb-2">7</div>
-              <div className="text-slate-400">Digital Company Nodes</div>
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 shadow-sm">
+              <div className="text-3xl font-black text-blue-600 mb-2">7</div>
+              <div className="text-slate-500 font-bold text-sm uppercase tracking-wider">Specialist Firms</div>
             </div>
-            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <div className="text-3xl font-bold text-purple-400 mb-2">99%</div>
-              <div className="text-slate-400">Security Score</div>
+            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 shadow-sm">
+              <div className="text-3xl font-black text-amber-600 mb-2">99%</div>
+              <div className="text-slate-500 font-bold text-sm uppercase tracking-wider">Security Score</div>
             </div>
           </div>
         </div>
@@ -53,8 +53,8 @@ export const PublicPortalModule: React.FC = () => {
 
       {/* Products Grid */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-2">
-          <TrendingUp className="text-blue-400" /> Featured Products
+        <h3 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-2">
+          <TrendingUp className="text-emerald-500" /> Top Commercial Assets
         </h3>
         
         {loading ? (
@@ -64,25 +64,26 @@ export const PublicPortalModule: React.FC = () => {
             {products.map((product) => (
               <div
                 key={product.id}
-                className="bg-slate-800 rounded-lg border border-slate-700 hover:border-blue-500 transition-all hover:shadow-lg hover:shadow-blue-500/20 overflow-hidden group"
+                className="bg-white rounded-2xl border border-slate-200 hover:border-emerald-500 transition-all hover:shadow-2xl hover:shadow-emerald-500/10 overflow-hidden group"
               >
-                <div className="h-40 bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                  <Sparkles size={32} className="text-white opacity-50" />
+                <div className="h-40 bg-slate-50 flex items-center justify-center relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-blue-600/5" />
+                  <Sparkles size={32} className="text-emerald-600 opacity-30" />
                 </div>
-                <div className="p-4">
-                  <h4 className="font-bold text-white mb-2 line-clamp-2 group-hover:text-blue-400">
+                <div className="p-5">
+                  <h4 className="font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-emerald-600 transition-colors">
                     {product.title}
                   </h4>
-                  <p className="text-slate-400 text-sm mb-4 line-clamp-2">{product.description}</p>
+                  <p className="text-slate-500 text-xs mb-4 line-clamp-2">{product.description}</p>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xl font-bold text-blue-400">${product.price}</span>
-                    <span className="text-yellow-400 text-sm">★ {product.rating}</span>
+                    <span className="text-xl font-black text-slate-900">${product.price}</span>
+                    <span className="text-amber-500 text-sm font-bold">★ {product.rating}</span>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
-                    <span>{product.downloads} downloads</span>
+                  <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                    <span>{product.downloads} sales</span>
                     <span>{product.firmName}</span>
                   </div>
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors">
+                  <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-600/20">
                     View Details
                   </button>
                 </div>

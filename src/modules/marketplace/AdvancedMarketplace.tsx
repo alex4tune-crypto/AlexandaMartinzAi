@@ -3,27 +3,31 @@ import { useRealtimeProducts, useRealtimeOrders } from '../../hooks/useRealtime'
 import { useAuth } from '../../context/AuthContext';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { useToast } from '../../components/Toast';
-import { ShoppingCart, Plus, Search, Filter, Star, Download, Eye } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { MarketplaceHeader } from './components/MarketplaceHeader';
+import { PromotionalBanner } from './components/PromotionalBanner';
+import { CategoryGrid } from './components/CategoryGrid';
+import { ShoppingCart, Star, Download, Eye, LayoutGrid, List } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 export const AdvancedMarketplace: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const { products, loading: productsLoading } = useRealtimeProducts();
   const { orders, loading: ordersLoading } = useRealtimeOrders(user?.id || '');
-  const [activeTab, setActiveTab] = useState<'browse' | 'orders' | 'analytics'>('browse');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'storefronts' | 'compare' | 'saved' | 'analytics'>('catalog');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [cart, setCart] = useState<any[]>([]);
   const [showCart, setShowCart] = useState(false);
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || p.category === filterCategory;
+    const matchesCategory = selectedCategory === 'All Categories' || p.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', ...new Set(products.map((p) => p.category))];
+  const categories = ['All Categories', ...new Set(products.map((p) => p.category))];
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -31,6 +35,7 @@ export const AdvancedMarketplace: React.FC = () => {
     const existing = cart.find((item) => item.id === product.id);
     if (existing) {
       existing.quantity += 1;
+      setCart([...cart]);
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
     }
@@ -60,160 +65,110 @@ export const AdvancedMarketplace: React.FC = () => {
     }, {})
   ).map(([name, value]) => ({ name, value }));
 
-  const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
+  const categoryCounts = products.reduce((acc: Record<string, number>, p: any) => {
+    acc[p.category] = (acc[p.category] || 0) + 1;
+    return acc;
+  }, { 'All': products.length });
+
+  const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#06b6d4'];
 
   return (
-    <div className="flex-1 bg-slate-950 overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Navigation Tabs */}
-        <div className="flex gap-4 mb-8 border-b border-slate-700">
-          {['browse', 'orders', 'analytics'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab as any)}
-              className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
-                activeTab === tab
-                  ? 'border-blue-500 text-blue-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
+    <div className="flex-1 bg-slate-50 overflow-y-auto">
+      <MarketplaceHeader
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        categories={categories}
+        activeTab={activeTab as any}
+        setActiveTab={setActiveTab as any}
+        favoritesCount={0}
+        compareCount={0}
+        onRequestQuote={() => setActiveTab('catalog')}
+        totalProductsCount={products.length}
+      />
 
-        {/* Browse Tab */}
-        {activeTab === 'browse' && (
-          <div>
-            {/* Search and Filter */}
-            <div className="flex gap-4 mb-8">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-3 text-slate-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-white placeholder-slate-400"
-                />
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {activeTab === 'catalog' && (
+          <div className="space-y-8">
+            <PromotionalBanner 
+              featuredProducts={products.filter(p => p.isFeatured)} 
+              onSelectProduct={addToCart}
+              onRequestQuote={() => setActiveTab('catalog')}
+            />
+            <CategoryGrid 
+              selectedCategory={selectedCategory === 'All Categories' ? 'All' : selectedCategory} 
+              onSelectCategory={(cat) => setSelectedCategory(cat === 'All' ? 'All Categories' : cat)}
+              categoryCounts={categoryCounts}
+            />
+
+            {/* Catalog Controls */}
+            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <h2 className="text-xl font-bold text-slate-800">
+                {selectedCategory} <span className="text-slate-400 font-normal ml-2">({filteredProducts.length} items)</span>
+              </h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded-lg ${viewMode === 'grid' ? 'bg-emerald-100 text-emerald-600' : 'text-slate-400'}`}
+                >
+                  <LayoutGrid size={20} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded-lg ${viewMode === 'list' ? 'bg-emerald-100 text-emerald-600' : 'text-slate-400'}`}
+                >
+                  <List size={20} />
+                </button>
               </div>
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => setShowCart(!showCart)}
-                className="relative bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2"
-              >
-                <ShoppingCart size={20} />
-                {cartItemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
-                    {cartItemsCount}
-                  </span>
-                )}
-              </button>
             </div>
 
-            {/* Cart Drawer */}
-            {showCart && (
-              <div className="fixed inset-0 bg-black/50 z-40 flex justify-end">
-                <div className="bg-slate-800 w-96 border-l border-slate-700 p-6 overflow-y-auto">
-                  <h3 className="text-2xl font-bold text-white mb-6">Shopping Cart</h3>
-                  {cart.length === 0 ? (
-                    <p className="text-slate-400">Your cart is empty</p>
-                  ) : (
-                    <>
-                      <div className="space-y-4 mb-6">
-                        {cart.map((item) => (
-                          <div key={item.id} className="bg-slate-700 rounded p-3">
-                            <div className="flex justify-between mb-2">
-                              <h4 className="font-bold text-white line-clamp-1">{item.title}</h4>
-                              <button
-                                onClick={() => removeFromCart(item.id)}
-                                className="text-red-400 hover:text-red-600"
-                              >
-                                ×
-                              </button>
-                            </div>
-                            <div className="flex justify-between text-sm text-slate-300">
-                              <span>${item.price}</span>
-                              <span>×{item.quantity}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="border-t border-slate-700 pt-4 mb-4">
-                        <div className="flex justify-between text-white mb-4">
-                          <span>Total:</span>
-                          <span className="text-2xl font-bold text-blue-400">${cartTotal.toLocaleString()}</span>
-                        </div>
-                        <button
-                          onClick={handleCheckout}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors mb-2"
-                        >
-                          Checkout
-                        </button>
-                        <button
-                          onClick={() => setShowCart(false)}
-                          className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
-                        >
-                          Continue Shopping
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Products Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1'}`}>
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500 transition-all group"
+                  className={`bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-emerald-500 hover:shadow-xl transition-all group ${
+                    viewMode === 'list' ? 'flex' : ''
+                  }`}
                 >
-                  <div className="h-40 bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center relative group-hover:opacity-90 transition-opacity">
-                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <button className="bg-blue-600 p-2 rounded-full hover:bg-blue-700 transition-colors">
-                        <Eye size={20} className="text-white" />
-                      </button>
-                      <button
-                        onClick={() => addToCart(product)}
-                        className="bg-green-600 p-2 rounded-full hover:bg-green-700 transition-colors"
-                      >
-                        <ShoppingCart size={20} className="text-white" />
-                      </button>
+                  <div className={`bg-slate-100 flex items-center justify-center relative ${viewMode === 'list' ? 'w-48 h-full' : 'h-48'}`}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-blue-600/20 opacity-50" />
+                    <ShoppingCart size={48} className="text-emerald-600 opacity-20" />
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[10px] font-bold text-emerald-700 shadow-sm border border-emerald-100">
+                      {product.status}
                     </div>
-                    <p className="text-white font-bold text-sm opacity-50">{product.category}</p>
                   </div>
-                  <div className="p-4">
-                    <h4 className="font-bold text-white mb-2 line-clamp-2 group-hover:text-blue-400">{product.title}</h4>
-                    <p className="text-slate-400 text-sm mb-4 line-clamp-2">{product.description}</p>
+
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="mb-2">
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">{product.category}</p>
+                      <h4 className="font-bold text-slate-900 text-base line-clamp-2 group-hover:text-emerald-600 transition-colors">
+                        {product.title}
+                      </h4>
+                    </div>
+
+                    <p className="text-slate-500 text-xs mb-4 line-clamp-2 flex-1">{product.description}</p>
+
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-xl font-bold text-blue-400">${product.price}</span>
-                      <div className="flex items-center gap-1">
-                        <Star size={16} className="text-yellow-400 fill-yellow-400" />
-                        <span className="text-sm text-slate-300">{product.rating}</span>
+                      <div className="flex flex-col">
+                        <span className="text-slate-400 text-[10px] font-bold uppercase">Price</span>
+                        <span className="text-lg font-black text-slate-900">${product.price}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <div className="flex items-center gap-1">
+                          <Star size={14} className="text-amber-400 fill-amber-400" />
+                          <span className="text-xs font-bold text-slate-700">{product.rating}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400">{product.downloads} downloads</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-slate-500 mb-4">
-                      <span className="flex items-center gap-1">
-                        <Download size={14} /> {product.downloads}
-                      </span>
-                      <span>{product.firmName}</span>
-                    </div>
+
                     <button
                       onClick={() => addToCart(product)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
                     >
+                      <ShoppingCart size={18} />
                       Add to Cart
                     </button>
                   </div>
@@ -223,63 +178,36 @@ export const AdvancedMarketplace: React.FC = () => {
           </div>
         )}
 
-        {/* Orders Tab */}
-        {activeTab === 'orders' && (
-          <div className="space-y-4">
-            {ordersLoading ? (
-              <LoadingSpinner />
-            ) : orders.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">No orders yet</div>
-            ) : (
-              orders.map((order) => (
-                <div key={order.id} className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-bold text-white">{order.title || 'Order'}</h3>
-                      <p className="text-slate-400 text-sm">{order.createdAt}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                      order.status === 'completed' ? 'bg-green-600' :
-                      order.status === 'pending' ? 'bg-yellow-600' :
-                      'bg-blue-600'
-                    }`}>
-                      {order.status?.toUpperCase()}
-                    </span>
-                  </div>
-                  <p className="text-slate-300">{order.description || order.projectRequirements}</p>
-                  <div className="mt-4 flex justify-between text-sm">
-                    <span className="text-slate-400">Total</span>
-                    <span className="text-blue-400 font-bold">${order.quoteAmount || order.price}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <h3 className="text-lg font-bold text-white mb-4">Products by Category</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie data={categoryDistribution} cx="50%" cy="50%" labelLine={false} label={() => null} outerRadius={80}>
-                    {categoryDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }} />
-                </PieChart>
-              </ResponsiveContainer>
+        {/* Analytics Tab (Previously visible, now hidden behind activeTab) */}
+        {activeTab === 'catalog' && (
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Category Distribution</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={categoryDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                      {categoryDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-              <h3 className="text-lg font-bold text-white mb-4">Top Products</h3>
-              <div className="space-y-3">
-                {[...products].sort((a, b) => b.downloads - a.downloads).slice(0, 5).map((product) => (
-                  <div key={product.id} className="flex justify-between items-center">
-                    <span className="text-slate-300">{product.title}</span>
-                    <span className="text-blue-400 font-bold">{product.downloads}</span>
+            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-800 mb-4">Top Specialists</h3>
+              <div className="space-y-4">
+                {products.slice(0, 5).map((p, i) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-xs">
+                        {i + 1}
+                      </div>
+                      <span className="text-sm font-medium text-slate-700">{p.firmName}</span>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-600">{p.downloads} sales</span>
                   </div>
                 ))}
               </div>
@@ -287,6 +215,64 @@ export const AdvancedMarketplace: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Cart Button Fixed */}
+      {cartItemsCount > 0 && (
+        <button
+          onClick={() => setShowCart(true)}
+          className="fixed bottom-8 right-8 bg-emerald-600 text-white p-4 rounded-full shadow-2xl shadow-emerald-600/40 flex items-center gap-2 hover:scale-110 transition-transform z-50"
+        >
+          <ShoppingCart size={24} />
+          <span className="font-bold">{cartItemsCount}</span>
+        </button>
+      )}
+
+      {/* Cart Drawer Overlay */}
+      {showCart && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-end">
+          <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+              <h3 className="text-xl font-bold text-slate-900">Your Cart</h3>
+              <button onClick={() => setShowCart(false)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {cart.map((item) => (
+                <div key={item.id} className="flex gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
+                    <ShoppingCart size={24} />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-slate-800 text-sm line-clamp-1">{item.title}</h4>
+                    <p className="text-slate-500 text-xs">{item.category}</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="font-bold text-emerald-600">${item.price}</span>
+                      <div className="flex items-center gap-2">
+                        <button className="text-slate-400 hover:text-slate-600">×</button>
+                        <span className="text-sm font-bold text-slate-700">{item.quantity}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100">
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-slate-500 font-medium">Total Amount</span>
+                <span className="text-2xl font-black text-slate-900">${cartTotal.toLocaleString()}</span>
+              </div>
+              <button
+                onClick={handleCheckout}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-600/20 transition-all"
+              >
+                Complete Purchase
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

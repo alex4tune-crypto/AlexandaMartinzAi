@@ -61,7 +61,7 @@ export const northflankService = {
     memory: string;
     env: Record<string, string>;
   }): Promise<{ deploymentId: string; status: string }> {
-    return api.post(`/api/northflank/projects/${projectId}/deploy`, data);
+    return api.post(`/api/northflank/projects/${projectId}/services`, data);
   },
 
   // Get service metrics
@@ -76,7 +76,7 @@ export const northflankService = {
 
   // Scale service
   async scaleService(projectId: string, serviceId: string, replicas: number): Promise<{ status: string }> {
-    return api.patch(`/api/northflank/projects/${projectId}/services/${serviceId}/scale`, { replicas });
+    return api.patch(`/api/northflank/projects/${projectId}/services/${serviceId}`, { replicas });
   },
 
   // Restart service
@@ -86,6 +86,6 @@ export const northflankService = {
 
   // Delete service
   async deleteService(projectId: string, serviceId: string): Promise<{ status: string }> {
-    return api.post(`/api/northflank/projects/${projectId}/services/${serviceId}/delete`, {});
+    return api.delete(`/api/northflank/projects/${projectId}/services/${serviceId}`);
   },
 };

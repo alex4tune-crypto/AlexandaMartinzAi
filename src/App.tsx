@@ -12,7 +12,7 @@ const MainContent: React.FC = () => {
   const { currentSurface } = usePlatform();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 font-sans antialiased text-slate-900">
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans antialiased text-slate-900">
       <Header />
       <div className="flex-1 flex flex-col min-h-0">
         {currentSurface === 'portal' && <PublicPortalModule />}

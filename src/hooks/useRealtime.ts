@@ -83,3 +83,23 @@ export const useRealtimeDeployment = (deploymentId: string) => {
 
   return { status, loading };
 };
+
+export const useRealtimeDecisions = () => {
+  const [decisions, setDecisions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    try {
+      const unsubscribe = realtimeService.subscribeToDecisions((data) => {
+        setDecisions(data);
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.error('Failed to load decisions:', err);
+      setLoading(false);
+    }
+  }, []);
+
+  return { decisions, loading };
+};

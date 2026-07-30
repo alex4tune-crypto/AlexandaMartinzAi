@@ -1,10 +1,10 @@
 // WebSocket Real-time Updates Service
 import { Server as HTTPServer } from 'http';
 import { Server as SocketIOServer, Socket } from 'socket.io';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import si from 'systeminformation';
 
 export interface RealtimeServer {
-  io: SocketIOServer<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
+  io: SocketIOServer<any, any, any, any>;
   broadcast: (event: string, data: any) => void;
   broadcastToRoom: (room: string, event: string, data: any) => void;
 }
@@ -34,16 +34,26 @@ export const initializeRealtimeServer = (httpServer: HTTPServer): RealtimeServer
 
     // Subscribe to metrics
     socket.on('subscribe-metrics', (projectId: string, serviceId: string) => {
-      const metricsInterval = setInterval(() => {
-        const metrics = {
-          cpuUsage: Math.random() * 80 + 10,
-          memoryUsage: Math.random() * 70 + 20,
-          requestsPerSecond: Math.random() * 500 + 100,
-          errorRate: Math.random() * 5,
-          latency: Math.random() * 200 + 50,
-          timestamp: new Date().toISOString(),
-        };
-        socket.emit('metrics-update', { projectId, serviceId, metrics });
+      const metricsInterval = setInterval(async () => {
+        try {
+          const [cpu, mem, network] = await Promise.all([
+            si.currentLoad(),
+            si.mem(),
+            si.networkStats(),
+          ]);
+
+          const metrics = {
+            cpuUsage: cpu.currentLoad,
+            memoryUsage: (mem.active / mem.total) * 100,
+            requestsPerSecond: network[0]?.rx_sec || 0, // Using rx_sec as a proxy for RPS
+            errorRate: 0, // Real error rate would need middleware tracking
+            latency: 20, // Real latency would need ping/probe logic
+            timestamp: new Date().toISOString(),
+          };
+          socket.emit('metrics-update', { projectId, serviceId, metrics });
+        } catch (error) {
+          console.error('Error fetching real system metrics:', error);
+        }
       }, 1000); // Update every second
 
       // Cleanup on disconnect
