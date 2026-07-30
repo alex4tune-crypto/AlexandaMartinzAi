@@ -4,15 +4,13 @@ import {
   signOut as firebaseSignOut, 
   sendPasswordResetEmail,
   sendEmailVerification,
-  updateProfile,
-  User as FirebaseUser,
-  onAuthStateChanged
+  updateProfile as firebaseUpdateProfile,
+  User as FirebaseUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 
 export interface UserProfileData {
-  uid: string;
+  id: string;
   email: string;
   displayName: string;
   companyName: string;
@@ -25,43 +23,23 @@ export interface UserProfileData {
   avatarUrl?: string;
 }
 
-// Create User Profile Document in Firestore
+// Sync User Profile with Backend (PostgreSQL)
 export const syncUserProfile = async (user: FirebaseUser, extraData?: { displayName?: string; companyName?: string; role?: 'customer' | 'admin' }) => {
-  if (!db) return null;
-  const userRef = doc(db, 'users', user.uid);
-  const snap = await getDoc(userRef);
-
-  if (!snap.exists()) {
-    // Default admin for founder email or role
-    const isDefaultAdmin = user.email === 'alexandamartinz4@gmail.com' || extraData?.role === 'admin';
-    const profileData: UserProfileData = {
-      uid: user.uid,
-      email: user.email || '',
-      displayName: extraData?.displayName || user.displayName || user.email?.split('@')[0] || 'Member',
-      companyName: extraData?.companyName || 'Alexanda Martinz Enterprise Network',
-      role: isDefaultAdmin ? 'admin' : (extraData?.role || 'customer'),
-      plan: isDefaultAdmin ? 'Enterprise Network' : 'Pro Foundry',
-      accountBalance: isDefaultAdmin ? 250000 : 5000,
-      emailVerified: user.emailVerified,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString()
-    };
-    await setDoc(userRef, profileData);
-    return profileData;
-  } else {
-    // Update lastLogin and emailVerified
-    const existing = snap.data() as UserProfileData;
-    const updated = {
-      ...existing,
-      emailVerified: user.emailVerified,
-      lastLogin: new Date().toISOString()
-    };
-    await updateDoc(userRef, {
-      emailVerified: user.emailVerified,
-      lastLogin: new Date().toISOString()
-    });
-    return updated;
-  }
+  const res = await fetch('/api/user/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: user.uid,
+      email: user.email,
+      displayName: extraData?.displayName || user.displayName,
+      companyName: extraData?.companyName,
+      role: extraData?.role,
+      emailVerified: user.emailVerified
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to sync profile');
+  return data.user as UserProfileData;
 };
 
 // Sign Up
@@ -74,9 +52,8 @@ export const registerWithEmail = async (
 ) => {
   if (!auth) throw new Error('Firebase Auth is not initialized');
   const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-  await updateProfile(userCred.user, { displayName: fullName });
+  await firebaseUpdateProfile(userCred.user, { displayName: fullName });
   
-  // Try sending email verification
   try {
     await sendEmailVerification(userCred.user);
   } catch (e) {
@@ -107,29 +84,32 @@ export const triggerPasswordReset = async (email: string) => {
   await sendPasswordResetEmail(auth, email);
 };
 
-// Resend Verification
-export const resendVerificationEmail = async (user: FirebaseUser) => {
-  await sendEmailVerification(user);
-};
-
-// Update User Profile
+// Update User Profile Data in Backend
 export const updateUserProfileData = async (uid: string, updates: Partial<UserProfileData>) => {
-  if (!db) return;
-  const userRef = doc(db, 'users', uid);
-  await updateDoc(userRef, updates);
+  const res = await fetch(`/api/user/${uid}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update profile');
+  return data.user as UserProfileData;
 };
 
-// Real-time listener for user profile
+// Fetch user profile
+export const fetchUserProfile = async (uid: string) => {
+  const res = await fetch(`/api/user/${uid}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to fetch profile');
+  return data.user as UserProfileData;
+};
+
+// Real-time listener placeholder (could be implemented with WebSockets if needed)
 export const subscribeToUserProfile = (
   uid: string, 
   onSuccess: (profile: UserProfileData) => void,
   onError?: (err: Error) => void
 ) => {
-  if (!db) return () => {};
-  const userRef = doc(db, 'users', uid);
-  return onSnapshot(userRef, (docSnap) => {
-    if (docSnap.exists()) {
-      onSuccess(docSnap.data() as UserProfileData);
-    }
-  }, onError);
+  fetchUserProfile(uid).then(onSuccess).catch(onError);
+  return () => {}; // Polling or WebSockets could be added here
 };

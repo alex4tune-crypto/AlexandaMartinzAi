@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id              String   @id @default(uuid())
+  title           String
+  category        String
+  firmName        String
+  price           Float
+  rating          Float
+  downloads       Int      @default(0)
+  description     String
+  features        String[]
+  deliverableType String
+  status          String   @default("PUBLISHED")
+  isFeatured      Boolean  @default(false)
+  updatedAt       DateTime @updatedAt
+}
+
+model Order {
+  id                  String   @id @default(uuid())
+  clientName          String
+  clientEmail         String
+  selectedCategory    String
+  projectRequirements String
+  budgetTier          String
+  assignedNode        String
+  status              String   @default("PENDING")
+  createdAt           DateTime @default(now())
+  trackingNumber      String   @unique
+  quoteAmount         Float
+}
+
+model AiDecision {
+  id                String   @id @default(uuid())
+  executiveSummary  String
+  strategicActions  String[]
+  delegatedTasks    Json
+  publishingDirectives String[]
+  securityDirectives String
+  timestamp         DateTime @default(now())
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  type      String
+  payload   Json
+  timestamp DateTime @default(now())
+}
+
+model User {
+  id             String   @id
+  email          String   @unique
+  displayName    String
+  companyName    String
+  role           String   @default("customer")
+  plan           String   @default("Pro Foundry")
+  accountBalance Float    @default(5000)
+  emailVerified  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  lastLogin      DateTime @default(now())
+  avatarUrl      String?
+}

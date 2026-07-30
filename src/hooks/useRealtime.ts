@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { realtimeService } from '../services/firebase-realtime';
+import { useEffect, useState } from 'react';
+import { socketService } from '../services/socketService';
 
 export const useRealtimeProducts = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -7,16 +7,28 @@ export const useRealtimeProducts = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      const unsubscribe = realtimeService.subscribeToProducts((data) => {
-        setProducts(data);
+    // Initial fetch
+    fetch('/api/marketplace/products')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setProducts(data.products);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Failed to load products');
         setLoading(false);
       });
-      return () => unsubscribe();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products');
-      setLoading(false);
-    }
+
+    // Subscribe to updates
+    const unsubscribe = socketService.subscribeToProducts((updatedProducts) => {
+      setProducts(updatedProducts);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   return { products, loading, error };
@@ -29,59 +41,21 @@ export const useRealtimeOrders = (userId: string) => {
 
   useEffect(() => {
     if (!userId) return;
-    try {
-      const unsubscribe = realtimeService.subscribeToOrders(userId, (data) => {
-        setOrders(data);
-        setLoading(false);
-      });
-      return () => unsubscribe();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load orders');
-      setLoading(false);
-    }
+
+    // Initial fetch (if we have an endpoint for user orders)
+    // For now we'll just use the socket for live updates
+    setLoading(false);
+
+    const unsubscribe = socketService.subscribeToOrders((newOrder) => {
+      setOrders(prev => [newOrder, ...prev]);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [userId]);
 
   return { orders, loading, error };
-};
-
-export const useRealtimeMetrics = (projectId: string, serviceId: string) => {
-  const [metrics, setMetrics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!projectId || !serviceId) return;
-    try {
-      const unsubscribe = realtimeService.subscribeToMetrics(projectId, serviceId, (data) => {
-        setMetrics(data);
-        setLoading(false);
-      });
-      return () => unsubscribe();
-    } catch (err) {
-      console.error('Failed to subscribe to metrics:', err);
-    }
-  }, [projectId, serviceId]);
-
-  return { metrics, loading };
-};
-
-export const useRealtimeDeployment = (deploymentId: string) => {
-  const [status, setStatus] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!deploymentId) return;
-    try {
-      const unsubscribe = realtimeService.subscribeToDeployment(deploymentId, (data) => {
-        setStatus(data);
-        setLoading(false);
-      });
-      return () => unsubscribe();
-    } catch (err) {
-      console.error('Failed to subscribe to deployment:', err);
-    }
-  }, [deploymentId]);
-
-  return { status, loading };
 };
 
 export const useRealtimeDecisions = () => {
@@ -89,17 +63,40 @@ export const useRealtimeDecisions = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const unsubscribe = realtimeService.subscribeToDecisions((data) => {
-        setDecisions(data);
+    // Initial fetch
+    fetch('/api/analytics/events?type=ai-ceo-decision')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setDecisions(data.events);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
         setLoading(false);
       });
-      return () => unsubscribe();
-    } catch (err) {
-      console.error('Failed to load decisions:', err);
-      setLoading(false);
-    }
+
+    const unsubscribe = socketService.subscribeToDecisions((newDecision) => {
+      setDecisions(prev => [newDecision, ...prev]);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   return { decisions, loading };
+};
+
+// Placeholder hooks for metrics and deployment (could be implemented similarly)
+export const useRealtimeMetrics = (projectId: string, serviceId: string) => {
+  const [metrics, setMetrics] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  return { metrics, loading };
+};
+
+export const useRealtimeDeployment = (deploymentId: string) => {
+  const [status, setStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  return { status, loading };
 };

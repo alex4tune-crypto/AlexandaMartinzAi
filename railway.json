@@ -1,1 +1,13 @@
-{"$schema":"https://railway.app/railway.json","build":{"builder":"nixpacks"},"deploy":{"numReplicas":1,"restartPolicyType":"always","restartPolicyMaxRetries":5}}
+{
+  "$schema": "https://railway.app/railway.json",
+  "build": {
+    "builder": "docker"
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "restartPolicyType": "always",
+    "restartPolicyMaxRetries": 5,
+    "healthCheckPath": "/api/health",
+    "healthCheckTimeout": 10
+  }
+}
